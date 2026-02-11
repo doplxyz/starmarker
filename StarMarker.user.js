@@ -2,8 +2,8 @@
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
 // @name           IITC plugin: PortalStar
 // @category       Layer
-// @version        1.1.0
-// @description    [1.1.0] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.1
+// @description    [1.1.1] 監視ユーザ検知・履歴保存プラグイン
 // @id             iitc-plugin-portal-star
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-05-21-000000'; // Updated date
+    plugin_info.dateTimeVersion = '2026-02-11-000000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-portal-star';
 
     // -----------------------------------------------------------------------
@@ -348,11 +348,16 @@ function wrapper(plugin_info) {
 
     // --- Function 00160 Draw Marker
     self.drawMarker = function(guid, lat, lng, usersFound) {
+        if (!usersFound || !Array.isArray(usersFound)) return;
+
         // Priority: User 1 > User 5
         var userConfig = null;
+        var usersFoundLower = usersFound.map(function(u){ return (u || '').toLowerCase(); });
+
         for(var i=0; i<self.settings.users.length; i++) {
             var u = self.settings.users[i];
-            if(u.name && usersFound.indexOf(u.name) !== -1) {
+            var settingName = (u.name || '').trim().toLowerCase();
+            if(settingName && usersFoundLower.indexOf(settingName) !== -1) {
                 userConfig = u;
                 break; // Stop at highest priority
             }
@@ -453,9 +458,9 @@ function wrapper(plugin_info) {
     // --- Function 00180 Detection Logic
     self.isDetailsReady = function(d) {
         if (!d) return false;
-        // Check if basic structure exists
-        var hasMods = Array.isArray(d.mods);
-        var hasReso = Array.isArray(d.resonators);
+        // Stricter check (from Android Mini plugin)
+        var hasMods = Array.isArray(d.mods) && d.mods.filter(Boolean).length > 0;
+        var hasReso = Array.isArray(d.resonators) && d.resonators.filter(Boolean).some(function(r) { return r && r.owner; });
         return hasMods || hasReso;
     };
 
@@ -483,20 +488,13 @@ function wrapper(plugin_info) {
         var currentUsers = Array.from(userSet).sort();
         if (currentUsers.length === 0) return;
 
-        // Check if any user is watched (Wait, user says "Write out ALL user names... need to correspond if target increases later")
-        // So we record ALWAYS if we detect users? Or only if at least ONE watched user is present?
-        // Usually detection plugins only fire if watched user is present to avoid spamming data.
-        // But the requirement says "JSON information needs to write out ALL users... for retroactive checking".
-        // BUT, item ⑦ says "Star doesn't appear... fix detection logic".
-        // And item ③ says "Write out all users...".
-        // I will implement: Only SAVE if at least one watched user is present? Or Save ALL history for ALL portals clicked?
-        // The user example shows: " 生田公園... player_a,player_b,player_c".
-        // If NONE of them were watched, would the user want a log? Probably not, it would fill storage with every portal clicked.
-        // So: Trigger save if AT LEAST ONE watched user is found. BUT save ALL users found on that portal.
-
+        // Case-Insensitive Check
+        var currentUsersLower = new Set(currentUsers.map(function(u){ return u.toLowerCase(); }));
         var watchedFound = false;
+
         for(var i=0; i<self.settings.users.length; i++) {
-            if(self.settings.users[i].name && userSet.has(self.settings.users[i].name)) {
+            var settingName = (self.settings.users[i].name || '').trim().toLowerCase();
+            if(settingName && currentUsersLower.has(settingName)) {
                 watchedFound = true;
                 break;
             }
@@ -504,8 +502,15 @@ function wrapper(plugin_info) {
 
         if(!watchedFound) return;
 
-        var lat = (p && p.getLatLng) ? p.getLatLng().lat : (d.latE6/1E6);
-        var lng = (p && p.getLatLng) ? p.getLatLng().lng : (d.lngE6/1E6);
+        // Coordinate Extraction (Robust)
+        var lat = (p && p.getLatLng) ? p.getLatLng().lat : (d.latE6 ? d.latE6/1E6 : NaN);
+        var lng = (p && p.getLatLng) ? p.getLatLng().lng : (d.lngE6 ? d.lngE6/1E6 : NaN);
+
+        if (isNaN(lat) || isNaN(lng)) {
+             // Abort if no valid coordinates (cannot draw marker)
+            return;
+        }
+
         var title = d.title || 'Untitled';
         var now = new Date().getTime();
 
