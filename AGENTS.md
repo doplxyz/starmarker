@@ -1,6 +1,3 @@
-## Note
-This metadata is written in Japanese. Translate it into English and use it.
-
 ##注意
 AGENTS.md の内容は読み取り専用としてのみ使用し、いかなる形でも書き換えてはならない。
 このメタデータは日本語で書かれている。英語→日本語などの翻訳化は絶対に許可しない。それは捏造と改変であり重大なインシデントである。
