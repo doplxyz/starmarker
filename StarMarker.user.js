@@ -2,8 +2,8 @@
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
 // @name           IITC plugin: PortalStar
 // @category       d.org.addon
-// @version        1.1.1
-// @description    [1.1.1] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.2
+// @description    [1.1.2] 監視ユーザ検知・履歴保存プラグイン
 // @id             iitc-plugin-portal-star
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2026-02-11-000000'; // Updated date
+    plugin_info.dateTimeVersion = '2025-02-23-000000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-portal-star';
 
     // -----------------------------------------------------------------------
@@ -259,7 +259,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.portalStar.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.0</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.2</div>';
         html += '</div>';
 
         // User Tabs
@@ -328,8 +328,11 @@ function wrapper(plugin_info) {
         }
     };
 
-    // --- Function 00150 Setup Layers
-    self.setupLayers = function() {
+    // --- Function 00150 Setup Layers (Renamed/Refactored for Robustness)
+    self.ensureMarkerInfra = function() {
+        if (!window.map || !window.L) return false;
+
+        // Ensure Pane
         if (!map.getPane(PANE_NAME)) {
             map.createPane(PANE_NAME);
             var pane = map.getPane(PANE_NAME);
@@ -337,13 +340,15 @@ function wrapper(plugin_info) {
             pane.style.zIndex = PANE_ZINDEX;
         }
 
-        self.starLayerGroup = new L.LayerGroup();
-        self.ringLayerGroup = new L.LayerGroup();
+        // Initialize Layer Groups if needed
+        if (!self.starLayerGroup) {
+            self.starLayerGroup = new L.LayerGroup();
+        }
+        if (!self.ringLayerGroup) {
+            self.ringLayerGroup = new L.LayerGroup();
+        }
 
-        window.addLayerGroup('PortalStar Stars', self.starLayerGroup, true);
-        window.addLayerGroup('PortalStar Rings', self.ringLayerGroup, true);
-
-        self.toggleDeleteMode(); // Set initial pointer-events state
+        return true;
     };
 
     // --- Function 00160 Draw Marker
@@ -500,7 +505,14 @@ function wrapper(plugin_info) {
             }
         }
 
-        if(!watchedFound) return;
+        if(!watchedFound) {
+            if(self.data[guid]) {
+                delete self.data[guid];
+                self.saveData();
+                self.deletePortalData(guid);
+            }
+            return;
+        }
 
         // Coordinate Extraction (Robust)
         var lat = (p && p.getLatLng) ? p.getLatLng().lat : (d.latE6 ? d.latE6/1E6 : NaN);
@@ -577,12 +589,12 @@ function wrapper(plugin_info) {
 
     // Hooks
     self.onPortalSelected = function(data) {
-        var guid = data.selectedPortalGuid;
+        const guid = data?.selectedPortalGuid || window.selectedPortal;
         if (guid) self.queueCheck(guid);
     };
 
     self.onDetailsUpdated = function(data) {
-        var guid = data.guid;
+        const guid = data?.guid || data?.details?.guid || window.selectedPortal;
         if (guid) self.queueCheck(guid);
     };
 
@@ -747,8 +759,43 @@ function wrapper(plugin_info) {
         self.loadSettings();
         self.loadData();
         self.autoPruneLogs();
-        self.updateToolbox();
-        self.setupLayers();
+
+        // Retry Loop for Map/Layer Initialization
+        var tries = 0;
+        var initTimer = setInterval(function() {
+            tries++;
+            if (self.ensureMarkerInfra()) {
+                clearInterval(initTimer);
+
+                // Add Layers
+                if (window.layerChooser) {
+                    window.layerChooser.addOverlay(self.starLayerGroup, 'PortalStar Stars');
+                    window.layerChooser.addOverlay(self.ringLayerGroup, 'PortalStar Rings');
+                } else {
+                    map.addLayer(self.starLayerGroup);
+                    map.addLayer(self.ringLayerGroup);
+                }
+
+                self.toggleDeleteMode(); // Set initial pointer-events state
+                self.redrawAllMarkers();
+            } else if (tries >= 20) {
+                clearInterval(initTimer);
+                console.warn('PortalStar: Failed to initialize map layers (timeout).');
+            }
+        }, 500);
+
+        // UI Injection Retry
+        var uiTries = 0;
+        var uiTimer = setInterval(function() {
+            if ($('#toolbox').length > 0) {
+                self.updateToolbox();
+                if ($('#portalstar-toolbox-link').length > 0) {
+                    clearInterval(uiTimer);
+                }
+            }
+            uiTries++;
+            if (uiTries >= 20) clearInterval(uiTimer);
+        }, 500);
 
         // Register Hooks
         window.addHook('portalSelected', self.onPortalSelected);
