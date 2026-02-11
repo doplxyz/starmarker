@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.5
-// @description    [1.1.5] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.6
+// @description    [1.1.6] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-02-25-120000'; // Updated date
+    plugin_info.dateTimeVersion = '2025-02-25-130000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-star-marker';
 
     // -----------------------------------------------------------------------
@@ -30,7 +30,7 @@ function wrapper(plugin_info) {
     const KEY_SETTINGS = 'plugin-starmarker-settings';
     const KEY_DATA = 'plugin-starmarker-data';
     const PANE_NAME = 'plugin-starmarker-pane';
-    const PANE_ZINDEX = 500; // Lower Z-Index (Shadow Pane level) to be behind portal markers
+    const PANE_ZINDEX = 710; // Updated to 710 (Portal Audit Mini level) for better visibility
 
     // --- Function 00000 Initialize Variables
     self.init = function() {
@@ -267,7 +267,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.starMarker.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.5</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.6</div>';
         html += '</div>';
 
         // User Tabs
@@ -387,6 +387,7 @@ function wrapper(plugin_info) {
                 color: userConfig.ringColor,
                 fill: false,
                 fillOpacity: 0,
+                opacity: 1,
                 weight: 2,
                 pane: PANE_NAME,
                 className: 'starmarker-ring', // Ensure CSS pointer-events works
