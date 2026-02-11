@@ -18,3 +18,5 @@ Unless major functional improvements are required, modifications will be kept to
 Please generate a file for each version, such as StarMarker.1.0.1.user.js. This is for user version management purposes.
 As the main work stream, overwrite the StarMarker.user.js file so that the coding differences can be seen.
 In other words, each pull will generate two files with the same content.
+
+## .4 Always code your scripts for Android, never use code that can only be used on PC.
