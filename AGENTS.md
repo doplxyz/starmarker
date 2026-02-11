@@ -3,8 +3,8 @@ The contents of AGENTS.md should only be used as a reference and should not be r
 ## 1. Metadata & Identity (STRICT)
 The following lines should never be changed. However, anything between these lines is okay to change. For example, version information.
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
-// @id             iitc-plugin-portal-star
-// @name           IITC plugin: PortalStar
+// @id             iitc-plugin-star-marker
+// @name           IITC plugin: Star Marker
 // @category       d.org.addon
 // @namespace      https://example.com/
 // @include        https://intel.ingress.com/*
