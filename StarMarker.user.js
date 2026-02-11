@@ -1,10 +1,10 @@
 // ==UserScript==
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
-// @name           IITC plugin: PortalStar
+// @id             iitc-plugin-star-marker
+// @name           IITC plugin: Star Marker
 // @category       d.org.addon
 // @version        1.1.2
 // @description    [1.1.2] 監視ユーザ検知・履歴保存プラグイン
-// @id             iitc-plugin-portal-star
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
