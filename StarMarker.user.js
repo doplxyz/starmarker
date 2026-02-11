@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.4
-// @description    [1.1.4] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.5
+// @description    [1.1.5] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,20 +16,20 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-02-25-000000'; // Updated date
-    plugin_info.pluginId = 'iitc-plugin-portal-star';
+    plugin_info.dateTimeVersion = '2025-02-25-120000'; // Updated date
+    plugin_info.pluginId = 'iitc-plugin-star-marker';
 
     // -----------------------------------------------------------------------
     // PLUGIN START
     // -----------------------------------------------------------------------
 
-    window.plugin.portalStar = function () {};
-    var self = window.plugin.portalStar;
+    window.plugin.starMarker = function () {};
+    var self = window.plugin.starMarker;
 
     // Constants
-    const KEY_SETTINGS = 'plugin-portalstar-settings';
-    const KEY_DATA = 'plugin-portalstar-data';
-    const PANE_NAME = 'plugin-portalstar-pane';
+    const KEY_SETTINGS = 'plugin-starmarker-settings';
+    const KEY_DATA = 'plugin-starmarker-data';
+    const PANE_NAME = 'plugin-starmarker-pane';
     const PANE_ZINDEX = 500; // Lower Z-Index (Shadow Pane level) to be behind portal markers
 
     // --- Function 00000 Initialize Variables
@@ -61,12 +61,16 @@ function wrapper(plugin_info) {
     self.loadSettings = function() {
         try {
             var loaded = localStorage.getItem(KEY_SETTINGS);
+            // Migration
+            if(!loaded) {
+                loaded = localStorage.getItem('plugin-portalstar-settings');
+            }
             if(loaded) {
                 var parsed = JSON.parse(loaded);
                 $.extend(true, self.settings, parsed);
             }
         } catch(e) {
-            console.error('PortalStar: Error loading settings', e);
+            console.error('StarMarker: Error loading settings', e);
         }
     };
 
@@ -75,7 +79,7 @@ function wrapper(plugin_info) {
         try {
             localStorage.setItem(KEY_SETTINGS, JSON.stringify(self.settings));
         } catch(e) {
-            console.error('PortalStar: Error saving settings', e);
+            console.error('StarMarker: Error saving settings', e);
         }
     };
 
@@ -88,6 +92,10 @@ function wrapper(plugin_info) {
                 return;
             }
             var loaded = localStorage.getItem(KEY_DATA);
+            // Migration
+            if(!loaded) {
+                loaded = localStorage.getItem('plugin-portalstar-data');
+            }
             if(loaded) {
                 self.data = JSON.parse(loaded);
                 // Migration check: If old format (Array of 5 elements), convert?
@@ -108,7 +116,7 @@ function wrapper(plugin_info) {
                 }
             }
         } catch(e) {
-            console.error('PortalStar: Error loading data', e);
+            console.error('StarMarker: Error loading data', e);
             self.data = {};
         }
     };
@@ -118,7 +126,7 @@ function wrapper(plugin_info) {
         try {
             localStorage.setItem(KEY_DATA, JSON.stringify(self.data));
         } catch(e) {
-            console.error('PortalStar: Error saving data', e);
+            console.error('StarMarker: Error saving data', e);
         }
         self.updateCount();
     };
@@ -153,122 +161,122 @@ function wrapper(plugin_info) {
 
         if(changed) {
             self.saveData();
-            console.log('PortalStar: Auto-pruned old logs.');
+            console.log('StarMarker: Auto-pruned old logs.');
         }
     };
 
     // --- Function 00080 Add CSS
     self.addCSS = function() {
         $('<style>').prop('type', 'text/css').html(`
-            .portalstar-dialog { min-width: 350px; color: #ddd; }
-            .portalstar-tabs { display: flex; border-bottom: 1px solid #444; margin-bottom: 10px; }
-            .portalstar-tab { padding: 8px 12px; cursor: pointer; border: 1px solid transparent; color: #aaa; flex: 1; text-align: center; }
-            .portalstar-tab.active { border: 1px solid #444; border-bottom: 1px solid #0e0e0e; background: #222; color: #ffce00; font-weight: bold; }
-            .portalstar-content { display: none; }
-            .portalstar-content.active { display: block; }
-            .portalstar-row { margin-bottom: 8px; display: flex; align-items: center; }
-            .portalstar-label { width: 120px; color: #ddd; }
-            .portalstar-input { flex: 1; padding: 4px; background: #333; color: #fff; border: 1px solid #555; }
-            .portalstar-btn { padding: 5px 10px; margin-right: 5px; cursor: pointer; background: #444; border: 1px solid #666; color: #fff; }
-            .portalstar-btn:hover { background: #555; }
-            .portalstar-btn.danger { background: #800; border-color: #a00; }
-            .portalstar-preview { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 5px; border: 1px solid #fff; }
+            .starmarker-dialog { min-width: 350px; color: #ddd; }
+            .starmarker-tabs { display: flex; border-bottom: 1px solid #444; margin-bottom: 10px; }
+            .starmarker-tab { padding: 8px 12px; cursor: pointer; border: 1px solid transparent; color: #aaa; flex: 1; text-align: center; }
+            .starmarker-tab.active { border: 1px solid #444; border-bottom: 1px solid #0e0e0e; background: #222; color: #ffce00; font-weight: bold; }
+            .starmarker-content { display: none; }
+            .starmarker-content.active { display: block; }
+            .starmarker-row { margin-bottom: 8px; display: flex; align-items: center; }
+            .starmarker-label { width: 120px; color: #ddd; }
+            .starmarker-input { flex: 1; padding: 4px; background: #333; color: #fff; border: 1px solid #555; }
+            .starmarker-btn { padding: 5px 10px; margin-right: 5px; cursor: pointer; background: #444; border: 1px solid #666; color: #fff; }
+            .starmarker-btn:hover { background: #555; }
+            .starmarker-btn.danger { background: #800; border-color: #a00; }
+            .starmarker-preview { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 5px; border: 1px solid #fff; }
 
             /* Star/Ring CSS */
-            .portalstar-star-icon, .portalstar-ring { pointer-events: none !important; }
-            .portalstar-star-icon { text-align: center; }
+            .starmarker-star-icon, .starmarker-ring { pointer-events: none !important; }
+            .starmarker-star-icon { text-align: center; }
 
             /* Delete Mode */
-            body.portalstar-delete-mode .portalstar-star-icon,
-            body.portalstar-delete-mode .portalstar-ring { pointer-events: auto !important; cursor: crosshair; }
+            body.starmarker-delete-mode .starmarker-star-icon,
+            body.starmarker-delete-mode .starmarker-ring { pointer-events: auto !important; cursor: crosshair; }
 
             /* Viewer Table */
-            .portalstar-log-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            .portalstar-log-table th, .portalstar-log-table td { border: 1px solid #444; padding: 4px; text-align: left; vertical-align: top; }
-            .portalstar-log-table th { background: #222; color: #fff; }
+            .starmarker-log-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            .starmarker-log-table th, .starmarker-log-table td { border: 1px solid #444; padding: 4px; text-align: left; vertical-align: top; }
+            .starmarker-log-table th { background: #222; color: #fff; }
         `).appendTo('head');
     };
 
     // --- Function 00090 Update Toolbox
     self.updateToolbox = function() {
-        if($('#portalstar-toolbox-link').length === 0) {
-            $('#toolbox').append('<a id="portalstar-toolbox-link" onclick="window.plugin.portalStar.openSettings();return false;">PortalStar</a>');
+        if($('#starmarker-toolbox-link').length === 0) {
+            $('#toolbox').append('<a id="starmarker-toolbox-link" onclick="window.plugin.starMarker.openSettings();return false;">StarMarker</a>');
         }
 
-        if($('#portalstar-status').length === 0) {
-            $('#sidebar').prepend('<div id="portalstar-status" style="padding:5px; border-bottom:1px solid #444; color:#ffce00;">' +
-                'PortalStar: <span id="portalstar-count">0</span> 件 ' +
-                '<label style="margin-left:10px;"><input type="checkbox" id="portalstar-delete-mode" onchange="window.plugin.portalStar.toggleDeleteMode()"> 削除モード</label>' +
+        if($('#starmarker-status').length === 0) {
+            $('#sidebar').prepend('<div id="starmarker-status" style="padding:5px; border-bottom:1px solid #444; color:#ffce00;">' +
+                'StarMarker: <span id="starmarker-count">0</span> 件 ' +
+                '<label style="margin-left:10px;"><input type="checkbox" id="starmarker-delete-mode" onchange="window.plugin.starMarker.toggleDeleteMode()"> 削除モード</label>' +
                 '</div>');
         }
 
         self.updateCount();
-        $('#portalstar-delete-mode').prop('checked', self.settings.deleteMode);
+        $('#starmarker-delete-mode').prop('checked', self.settings.deleteMode);
     };
 
     self.updateCount = function() {
         var count = Object.keys(self.data).length;
-        $('#portalstar-count').text(count);
+        $('#starmarker-count').text(count);
     };
 
     // --- Function 00100 Toggle Delete Mode
     self.toggleDeleteMode = function() {
-        self.settings.deleteMode = $('#portalstar-delete-mode').prop('checked');
+        self.settings.deleteMode = $('#starmarker-delete-mode').prop('checked');
         self.saveSettings();
 
         if (self.settings.deleteMode) {
-            $(document.body).addClass('portalstar-delete-mode');
+            $(document.body).addClass('starmarker-delete-mode');
         } else {
-            $(document.body).removeClass('portalstar-delete-mode');
+            $(document.body).removeClass('starmarker-delete-mode');
         }
     };
 
     // --- Function 00110 Open Settings
     self.openSettings = function() {
-        var html = '<div class="portalstar-dialog">';
+        var html = '<div class="starmarker-dialog">';
 
         // Tabs
-        html += '<div class="portalstar-tabs">';
-        html += '<div class="portalstar-tab active" onclick="window.plugin.portalStar.switchTab(\'general\')">一般</div>';
+        html += '<div class="starmarker-tabs">';
+        html += '<div class="starmarker-tab active" onclick="window.plugin.starMarker.switchTab(\'general\')">一般</div>';
         for(var i=0; i<5; i++) {
-            html += '<div class="portalstar-tab" onclick="window.plugin.portalStar.switchTab(\'user'+i+'\')">User '+(i+1)+'</div>';
+            html += '<div class="starmarker-tab" onclick="window.plugin.starMarker.switchTab(\'user'+i+'\')">User '+(i+1)+'</div>';
         }
         html += '</div>';
 
         // General Tab
-        html += '<div id="portalstar-tab-general" class="portalstar-content active">';
-        html += '<div class="portalstar-row"><label><input type="checkbox" id="ps-clear-reload" ' + (self.settings.clearOnReload ? 'checked' : '') + '> リロードでクリア</label></div>';
-        html += '<div class="portalstar-row"><label><input type="checkbox" id="ps-deduplicate" ' + (self.settings.deduplicate ? 'checked' : '') + '> 重複データ整理 (最新のみ残す)</label></div>';
-        html += '<div class="portalstar-row"><span class="portalstar-label">保存期間(日):</span><input type="number" id="ps-auto-prune" class="portalstar-input" value="' + self.settings.autoDeleteDays + '"></div>';
+        html += '<div id="starmarker-tab-general" class="starmarker-content active">';
+        html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-clear-reload" ' + (self.settings.clearOnReload ? 'checked' : '') + '> リロードでクリア</label></div>';
+        html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-deduplicate" ' + (self.settings.deduplicate ? 'checked' : '') + '> 重複データ整理 (最新のみ残す)</label></div>';
+        html += '<div class="starmarker-row"><span class="starmarker-label">保存期間(日):</span><input type="number" id="ps-auto-prune" class="starmarker-input" value="' + self.settings.autoDeleteDays + '"></div>';
 
-        html += '<div class="portalstar-row"><span class="portalstar-label">スターサイズ:</span>';
-        html += '<select id="ps-star-size" class="portalstar-input">';
+        html += '<div class="starmarker-row"><span class="starmarker-label">スターサイズ:</span>';
+        html += '<select id="ps-star-size" class="starmarker-input">';
         html += '<option value="small" ' + (self.settings.starSize === 'small' ? 'selected' : '') + '>小 (Small)</option>';
         html += '<option value="normal" ' + (self.settings.starSize === 'normal' ? 'selected' : '') + '>中 (Normal)</option>';
         html += '<option value="big" ' + (self.settings.starSize === 'big' ? 'selected' : '') + '>大 (Big)</option>';
         html += '</select></div>';
 
         html += '<div style="border-top:1px solid #444; padding-top:10px; margin-top:10px;">';
-        html += '<button class="portalstar-btn" onclick="window.plugin.portalStar.openViewer()">データ表示</button>';
-        html += '<button class="portalstar-btn danger" onclick="window.plugin.portalStar.clearAllData()">全データ削除</button>';
+        html += '<button class="starmarker-btn" onclick="window.plugin.starMarker.openViewer()">データ表示</button>';
+        html += '<button class="starmarker-btn danger" onclick="window.plugin.starMarker.clearAllData()">全データ削除</button>';
         html += '</div>';
 
         html += '<div style="border-top:1px solid #444; padding-top:10px; margin-top:10px;">';
-        html += '<button class="portalstar-btn" onclick="window.plugin.portalStar.exportData()">JSONエクスポート</button>';
-        html += '<button class="portalstar-btn" onclick="$(\'#ps-import-file\').click()">JSONインポート</button>';
-        html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.portalStar.importData(this)">';
+        html += '<button class="starmarker-btn" onclick="window.plugin.starMarker.exportData()">JSONエクスポート</button>';
+        html += '<button class="starmarker-btn" onclick="$(\'#ps-import-file\').click()">JSONインポート</button>';
+        html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.starMarker.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.4</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.5</div>';
         html += '</div>';
 
         // User Tabs
         for(var i=0; i<5; i++) {
             var u = self.settings.users[i];
-            html += '<div id="portalstar-tab-user'+i+'" class="portalstar-content">';
-            html += '<div class="portalstar-row"><span class="portalstar-label">ユーザ名:</span><input type="text" id="ps-user-'+i+'-name" class="portalstar-input" value="' + (u.name || '') + '"></div>';
-            html += '<div class="portalstar-row"><span class="portalstar-label">スター色:</span><input type="color" id="ps-user-'+i+'-star" value="' + (u.starColor || '#ffff00') + '"></div>';
-            html += '<div class="portalstar-row"><span class="portalstar-label">リング色:</span><input type="color" id="ps-user-'+i+'-ring" value="' + (u.ringColor || '#ff0000') + '"></div>';
+            html += '<div id="starmarker-tab-user'+i+'" class="starmarker-content">';
+            html += '<div class="starmarker-row"><span class="starmarker-label">ユーザ名:</span><input type="text" id="ps-user-'+i+'-name" class="starmarker-input" value="' + (u.name || '') + '"></div>';
+            html += '<div class="starmarker-row"><span class="starmarker-label">スター色:</span><input type="color" id="ps-user-'+i+'-star" value="' + (u.starColor || '#ffff00') + '"></div>';
+            html += '<div class="starmarker-row"><span class="starmarker-label">リング色:</span><input type="color" id="ps-user-'+i+'-ring" value="' + (u.ringColor || '#ff0000') + '"></div>';
             html += '<div style="margin-top:10px; color:#aaa; font-size:0.9em;">正確なエージェント名を入力してください(大文字小文字区別)。</div>';
             html += '</div>';
         }
@@ -277,8 +285,8 @@ function wrapper(plugin_info) {
 
         window.dialog({
             html: html,
-            id: 'plugin-portalstar-settings',
-            title: 'PortalStar 設定',
+            id: 'plugin-starmarker-settings',
+            title: 'StarMarker 設定',
             width: 'auto',
             closeCallback: function() {
                 self.saveSettingsFromUI();
@@ -288,15 +296,15 @@ function wrapper(plugin_info) {
 
     // --- Function 00120 Switch Tab
     self.switchTab = function(tabName) {
-        $('.portalstar-tab').removeClass('active');
-        $('.portalstar-content').removeClass('active');
+        $('.starmarker-tab').removeClass('active');
+        $('.starmarker-content').removeClass('active');
 
         var index = -1;
         if(tabName === 'general') index = 0;
         else index = parseInt(tabName.replace('user', '')) + 1;
 
-        $('.portalstar-tab').eq(index).addClass('active');
-        $('#portalstar-tab-' + tabName).addClass('active');
+        $('.starmarker-tab').eq(index).addClass('active');
+        $('#starmarker-tab-' + tabName).addClass('active');
     };
 
     // --- Function 00130 Save Settings From UI
@@ -381,16 +389,16 @@ function wrapper(plugin_info) {
                 fillOpacity: 0,
                 weight: 2,
                 pane: PANE_NAME,
-                className: 'portalstar-ring', // Ensure CSS pointer-events works
+                className: 'starmarker-ring', // Ensure CSS pointer-events works
                 interactive: true // Handle click via delete mode logic
             });
 
             // Fallback for older Leaflet versions that don't support className option on circleMarker
             if (ring._path) {
                 try {
-                    L.DomUtil.addClass(ring._path, 'portalstar-ring');
+                    L.DomUtil.addClass(ring._path, 'starmarker-ring');
                 } catch(e) {
-                    ring._path.classList.add('portalstar-ring');
+                    ring._path.classList.add('starmarker-ring');
                 }
             }
 
@@ -412,7 +420,7 @@ function wrapper(plugin_info) {
             if (self.settings.starSize === 'big') { sizePx = 36; anchorPx = 18; }
 
             var starIcon = L.divIcon({
-                className: 'portalstar-star-icon',
+                className: 'starmarker-star-icon',
                 html: '<div style="color:' + userConfig.starColor + '; font-size:'+sizePx+'px; text-shadow:0 0 3px black; line-height:1;">★</div>',
                 iconSize: [sizePx, sizePx],
                 iconAnchor: [anchorPx, anchorPx]
@@ -442,7 +450,7 @@ function wrapper(plugin_info) {
             self.saveData();
             self.redrawAllMarkers();
             // Feedback
-            if(window.chat) window.chat.addNickname('PortalStar: 削除しました ' + guid);
+            if(window.chat) window.chat.addNickname('StarMarker: 削除しました ' + guid);
         }
     };
 
@@ -612,7 +620,7 @@ function wrapper(plugin_info) {
     // --- Function 00190 Viewer
     self.openViewer = function() {
         var html = '<div style="height: 400px; overflow-y: auto;">';
-        html += '<table class="portalstar-log-table">';
+        html += '<table class="starmarker-log-table">';
         html += '<thead><tr><th>日時</th><th>ポータル名</th><th>検知ユーザ</th></tr></thead>';
         html += '<tbody>';
 
@@ -649,9 +657,9 @@ function wrapper(plugin_info) {
 
         window.dialog({
             html: html,
-            title: 'PortalStar ログ表示',
+            title: 'StarMarker ログ表示',
             width: 500,
-            dialogClass: 'ui-dialog-portalstar'
+            dialogClass: 'ui-dialog-starmarker'
         });
     };
 
@@ -780,8 +788,8 @@ function wrapper(plugin_info) {
 
                 // Add Layers
                 if (window.layerChooser) {
-                    window.layerChooser.addOverlay(self.starLayerGroup, 'PortalStar Stars');
-                    window.layerChooser.addOverlay(self.ringLayerGroup, 'PortalStar Rings');
+                    window.layerChooser.addOverlay(self.starLayerGroup, 'StarMarker Stars');
+                    window.layerChooser.addOverlay(self.ringLayerGroup, 'StarMarker Rings');
                 } else {
                     map.addLayer(self.starLayerGroup);
                     map.addLayer(self.ringLayerGroup);
@@ -791,7 +799,7 @@ function wrapper(plugin_info) {
                 self.redrawAllMarkers();
             } else if (tries >= 20) {
                 clearInterval(initTimer);
-                console.warn('PortalStar: Failed to initialize map layers (timeout).');
+                console.warn('StarMarker: Failed to initialize map layers (timeout).');
             }
         }, 500);
 
@@ -800,7 +808,7 @@ function wrapper(plugin_info) {
         var uiTimer = setInterval(function() {
             if ($('#toolbox').length > 0) {
                 self.updateToolbox();
-                if ($('#portalstar-toolbox-link').length > 0) {
+                if ($('#starmarker-toolbox-link').length > 0) {
                     clearInterval(uiTimer);
                 }
             }
@@ -812,7 +820,7 @@ function wrapper(plugin_info) {
         window.addHook('portalSelected', self.onPortalSelected);
         window.addHook('portalDetailsUpdated', self.onDetailsUpdated);
 
-        console.log('PortalStar: Initialized');
+        console.log('StarMarker: Initialized');
     };
 
     setup.info = plugin_info;
