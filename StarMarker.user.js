@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.2
-// @description    [1.1.2] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.3
+// @description    [1.1.3] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-02-23-000000'; // Updated date
+    plugin_info.dateTimeVersion = '2025-02-24-000000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-portal-star';
 
     // -----------------------------------------------------------------------
@@ -30,7 +30,7 @@ function wrapper(plugin_info) {
     const KEY_SETTINGS = 'plugin-portalstar-settings';
     const KEY_DATA = 'plugin-portalstar-data';
     const PANE_NAME = 'plugin-portalstar-pane';
-    const PANE_ZINDEX = 650; // High Z-Index to prevent blocking
+    const PANE_ZINDEX = 500; // Lower Z-Index (Shadow Pane level) to be behind portal markers
 
     // --- Function 00000 Initialize Variables
     self.init = function() {
@@ -259,7 +259,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.portalStar.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.2</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.3</div>';
         html += '</div>';
 
         // User Tabs
@@ -380,8 +380,18 @@ function wrapper(plugin_info) {
                 fill: false,
                 weight: 2,
                 pane: PANE_NAME,
+                className: 'portalstar-ring', // Ensure CSS pointer-events works
                 interactive: true // Handle click via delete mode logic
             });
+
+            // Fallback for older Leaflet versions that don't support className option on circleMarker
+            if (ring._path) {
+                try {
+                    L.DomUtil.addClass(ring._path, 'portalstar-ring');
+                } catch(e) {
+                    ring._path.classList.add('portalstar-ring');
+                }
+            }
 
             ring.on('click', function(e) {
                 if(self.settings.deleteMode) {
