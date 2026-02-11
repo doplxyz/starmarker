@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.3
-// @description    [1.1.3] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.4
+// @description    [1.1.4] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-02-24-000000'; // Updated date
+    plugin_info.dateTimeVersion = '2025-02-25-000000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-portal-star';
 
     // -----------------------------------------------------------------------
@@ -175,8 +175,8 @@ function wrapper(plugin_info) {
             .portalstar-preview { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 5px; border: 1px solid #fff; }
 
             /* Star/Ring CSS */
-            .portalstar-star-icon { pointer-events: none; text-align: center; }
-            .portalstar-ring { pointer-events: none; }
+            .portalstar-star-icon, .portalstar-ring { pointer-events: none !important; }
+            .portalstar-star-icon { text-align: center; }
 
             /* Delete Mode */
             body.portalstar-delete-mode .portalstar-star-icon,
@@ -259,7 +259,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.portalStar.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.3</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.4</div>';
         html += '</div>';
 
         // User Tabs
@@ -378,6 +378,7 @@ function wrapper(plugin_info) {
                 radius: 10, // Fixed radius for now
                 color: userConfig.ringColor,
                 fill: false,
+                fillOpacity: 0,
                 weight: 2,
                 pane: PANE_NAME,
                 className: 'portalstar-ring', // Ensure CSS pointer-events works
