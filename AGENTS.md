@@ -1,26 +1,32 @@
-The contents of AGENTS.md should only be used as a reference and should not be rewritten in any way.
+## Note
+This metadata is written in Japanese. Translate it into English and use it.
 
-## 0. Design Philosophy: What does this script aim to do?
+##注意
+このメタデータは日本語で書かれている。英語に翻訳し使う事。
 
-[1] It is an external plugin that runs on IITC for the location-based game Ingress.  
-[2] It was developed to investigate where users who do not output logs are active.  
-[3] For detection, the operational burden was reduced so that while casually viewing IITC in daily use, one can simply notice that the target user has visited a location.  
-[4] When a portal is tapped, extract the date, GUID, portal name, and the list of users included in Resonators and MODs, and store them in local storage as logs.  
-If the name of a monitored user is found, attach a star and a ring.  
-[5] Even when attaching a star and ring to a portal, it must not interfere with user taps. The rendering layer for the star and ring must exist behind the tap target.  
-[6] Allow management of multiple monitored users. The priority order is USER1, USER2, USER3, USER4, USER5, and overlapping display of stars and rings must not occur.  
-[7] Make it possible to clear both stars and rings on reload, with effectiveness controlled by an ON/OFF checkbox.  
-[8] When exporting/importing, organize duplicate data, controlled by an ON/OFF checkbox. Place this near the JSON export and JSON import buttons.  
-In the acquired data list, retain the date, GUID, portal name, and user name. However, even if the GUID is the same, if there is no change in the user name, discard the older data.  
-[9] Provide an optional execution button for organizing duplicate data.  
-[10] A button is required to display the acquired data.  
-[11] A button is required to delete all currently acquired data.  
-[12] Do not make edits that deviate from the design philosophy unless new instructions are given by the user.  
-[13] The default retention period is 1. The maximum value is 30 days.  
-[14] The default star size should be small.
+AGENTS.md の内容はあくまで参考としてのみ使用し、いかなる形でも書き換えてはならない。
 
-## 1. Metadata & Identity (STRICT)
-The following lines should never be changed. However, anything between these lines is okay to change. For example, version information.
+## 0. 設計思想：このスクリプトは何を目的としているか？
+
+[1] 位置情報ゲーム Ingress 用の IITC 上で動作する外部プラグインである。  
+[2] ログを出力しないユーザーがどこで活動しているかを調査するために開発された。  
+[3] 検出にあたっては、日常利用で何気なく IITC を閲覧している際に、対象ユーザーがその場所を訪れたことに気づけるよう、運用負荷を軽減した。  
+[4] ポータルをタップした際に、日付、GUID、ポータル名、Resonators および MODs に含まれるユーザー一覧を抽出し、ローカルストレージにログとして保存する。  
+監視対象ユーザーの名前が見つかった場合、星印とリングを付与する。  
+[5] ポータルに星印およびリングを付与する場合でも、ユーザーのタップ操作を妨げてはならない。星印およびリングの描画レイヤーはタップ対象の背後に存在しなければならない。  
+[6] 複数の監視対象ユーザーの管理を可能にする。優先順位は USER1、USER2、USER3、USER4、USER5 とし、星印およびリングの重複表示は発生してはならない。  
+[7] リロード時に星印およびリングの両方をクリアできるようにし、その有効・無効は ON/OFF チェックボックスで制御する。  
+[8] エクスポート／インポート時に重複データを整理する機能を設け、その有効・無効は ON/OFF チェックボックスで制御する。これは JSON エクスポートおよび JSON インポートボタンの近くに配置する。  
+取得データ一覧には、日付、GUID、ポータル名、ユーザー名を保持する。ただし、GUID が同一であってもユーザー名に変化がない場合は、古いデータを破棄する。  
+[9] 重複データ整理のための任意実行ボタンを用意する。  
+[10] 取得データを表示するためのボタンが必要である。  
+[11] 現在取得しているすべてのデータを削除するためのボタンが必要である。  
+[12] ユーザーから新たな指示がない限り、設計思想から逸脱する編集を行ってはならない。  
+[13] デフォルトの保存期間は 1 日とする。最大値は 30 日とする。  
+[14] デフォルトの星のサイズは小さくする。
+
+## 1. メタデータおよび識別情報（厳守）
+以下の行は決して変更してはならない。ただし、これらの行の間にある内容は変更してもよい。例えば、バージョン情報など。
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
@@ -30,12 +36,12 @@ The following lines should never be changed. However, anything between these lin
 // @include        https://intel-x.ingress.com/*
 // @grant          none
 
-## 2. Update process
-Unless major functional improvements are required, modifications will be kept to a minimum. Applying patches to each function will be given top priority.
+## 2. 更新プロセス
+大幅な機能改善が必要な場合を除き、修正は最小限にとどめる。各関数へのパッチ適用を最優先とする。
 
-## 3. Pull Behavior
-Please generate a file for each version, such as StarMarker.1.0.1.user.js. This is for user version management purposes.
-As the main work stream, overwrite the StarMarker.user.js file so that the coding differences can be seen.
-In other words, each pull will generate two files with the same content.
+## 3. プル時の挙動
+各バージョンごとに、StarMarker.1.0.1.user.js のようなファイルを生成すること。これはユーザーのバージョン管理のためである。  
+メインの作業ストリームとして、StarMarker.user.js ファイルを上書きし、コーディングの差分が確認できるようにする。  
+つまり、各プルで同一内容のファイルを 2 つ生成する。
 
-## .4 Always code your scripts for Android, never use code that can only be used on PC.
+## .4 スクリプトは常に Android 向けにコーディングし、PC でのみ使用可能なコードは決して使用しないこと。
