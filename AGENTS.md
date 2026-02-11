@@ -2,7 +2,9 @@
 This metadata is written in Japanese. Translate it into English and use it.
 
 ##注意
-このメタデータは日本語で書かれている。英語に翻訳し使う事。
+このメタデータは日本語で書かれている。上書きをするな。絶対に許可しない。
+上書きをするな。絶対に許可しない。
+上書きをするな。絶対に許可しない。
 
 AGENTS.md の内容はあくまで参考としてのみ使用し、いかなる形でも書き換えてはならない。
 
