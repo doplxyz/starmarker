@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author         DOPPELGENGER,GEMINI3PRO,JULES
 // @name           IITC plugin: PortalStar
-// @category       Layer
+// @category       d.org.addon
 // @version        1.1.1
 // @description    [1.1.1] 監視ユーザ検知・履歴保存プラグイン
 // @id             iitc-plugin-portal-star
