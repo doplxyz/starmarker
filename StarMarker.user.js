@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.7
-// @description    [1.1.7] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.8
+// @description    [1.1.8] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2026-07-26-000000'; // Updated date
+    plugin_info.dateTimeVersion = '2026-07-26-010000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-star-marker';
 
     // -----------------------------------------------------------------------
@@ -44,7 +44,7 @@ function wrapper(plugin_info) {
             ],
             autoDeleteDays: 0,
             clearOnReload: false,
-            deleteMode: false,
+            operationMode: 'add', // none | add | delete | toggle
             deduplicate: false, // Default OFF
             starSize: 'normal'  // small, normal, big
         };
@@ -68,6 +68,12 @@ function wrapper(plugin_info) {
             if(loaded) {
                 var parsed = JSON.parse(loaded);
                 $.extend(true, self.settings, parsed);
+
+                // Migration: old boolean deleteMode -> operationMode
+                if (typeof parsed.operationMode === 'undefined' && typeof parsed.deleteMode !== 'undefined') {
+                    self.settings.operationMode = parsed.deleteMode ? 'delete' : 'add';
+                }
+                delete self.settings.deleteMode;
             }
         } catch(e) {
             console.error('StarMarker: Error loading settings', e);
@@ -181,13 +187,9 @@ function wrapper(plugin_info) {
             .starmarker-btn.danger { background: #800; border-color: #a00; }
             .starmarker-preview { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-left: 5px; border: 1px solid #fff; }
 
-            /* Star/Ring CSS */
+            /* Star/Ring CSS: never intercept taps (per design principle) */
             .starmarker-star-icon, .starmarker-ring { pointer-events: none !important; }
             .starmarker-star-icon { text-align: center; }
-
-            /* Delete Mode */
-            body.starmarker-delete-mode .starmarker-star-icon,
-            body.starmarker-delete-mode .starmarker-ring { pointer-events: auto !important; cursor: crosshair; }
 
             /* Viewer Table */
             .starmarker-log-table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -207,16 +209,12 @@ function wrapper(plugin_info) {
         }
     };
 
-    // --- Function 00100 Set Delete Mode
-    self.setDeleteMode = function(enabled) {
-        self.settings.deleteMode = !!enabled;
+    // --- Function 00100 Set Operation Mode
+    self.setOperationMode = function(mode) {
+        var valid = ['none', 'add', 'delete', 'toggle'];
+        if (valid.indexOf(mode) === -1) mode = 'add';
+        self.settings.operationMode = mode;
         self.saveSettings();
-
-        if (self.settings.deleteMode) {
-            $(document.body).addClass('starmarker-delete-mode');
-        } else {
-            $(document.body).removeClass('starmarker-delete-mode');
-        }
     };
 
     // --- Function 00110 Open Settings
@@ -235,7 +233,18 @@ function wrapper(plugin_info) {
         html += '<div id="starmarker-tab-general" class="starmarker-content active">';
         html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-clear-reload" ' + (self.settings.clearOnReload ? 'checked' : '') + '> リロードでクリア</label></div>';
         html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-deduplicate" ' + (self.settings.deduplicate ? 'checked' : '') + '> 重複データ整理 (最新のみ残す)</label></div>';
-        html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-delete-mode" ' + (self.settings.deleteMode ? 'checked' : '') + '> 削除モード (★/リングをタップして削除)</label></div>';
+        html += '<div class="starmarker-row" style="align-items:flex-start;"><span class="starmarker-label">動作モード:</span><div>';
+        var opModes = [
+            { value: 'none', label: '動作無し (何もしない)' },
+            { value: 'add', label: '追加モード (★追加のみ)' },
+            { value: 'delete', label: '削除モード (★削除のみ)' },
+            { value: 'toggle', label: 'トグルモード (タップで★追加/削除を交互に行う)' }
+        ];
+        opModes.forEach(function(m) {
+            html += '<div><label><input type="radio" name="ps-operation-mode" value="' + m.value + '" ' +
+                (self.settings.operationMode === m.value ? 'checked' : '') + '> ' + m.label + '</label></div>';
+        });
+        html += '</div></div>';
         html += '<div class="starmarker-row"><span class="starmarker-label">保存期間(日):</span><input type="number" id="ps-auto-prune" class="starmarker-input" value="' + self.settings.autoDeleteDays + '"></div>';
 
         html += '<div class="starmarker-row"><span class="starmarker-label">スターサイズ:</span>';
@@ -256,7 +265,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.starMarker.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.7</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.8</div>';
         html += '</div>';
 
         // User Tabs
@@ -300,7 +309,7 @@ function wrapper(plugin_info) {
     self.saveSettingsFromUI = function() {
         self.settings.clearOnReload = $('#ps-clear-reload').prop('checked');
         self.settings.deduplicate = $('#ps-deduplicate').prop('checked');
-        self.setDeleteMode($('#ps-delete-mode').prop('checked'));
+        self.setOperationMode($('input[name="ps-operation-mode"]:checked').val());
         self.settings.autoDeleteDays = parseInt($('#ps-auto-prune').val()) || 0;
         self.settings.starSize = $('#ps-star-size').val();
 
@@ -410,7 +419,7 @@ function wrapper(plugin_info) {
                 weight: 2,
                 pane: PANE_NAME,
                 className: 'starmarker-ring', // Ensure CSS pointer-events works
-                interactive: true // Handle click via delete mode logic
+                interactive: false // Never intercept taps; add/delete is driven by portal taps (operation mode)
             });
 
             // Fallback for older Leaflet versions that don't support className option on circleMarker
@@ -421,13 +430,6 @@ function wrapper(plugin_info) {
                     ring._path.classList.add('starmarker-ring');
                 }
             }
-
-            ring.on('click', function(e) {
-                if(self.settings.deleteMode) {
-                    L.DomEvent.stop(e);
-                    self.deletePortalData(guid);
-                }
-            });
 
             self.ringLayerGroup.addLayer(ring);
         }
@@ -448,16 +450,9 @@ function wrapper(plugin_info) {
 
             var star = L.marker(latlng, {
                 icon: starIcon,
-                interactive: true,
+                interactive: false, // Never intercept taps; add/delete is driven by portal taps (operation mode)
                 pane: PANE_NAME,
                 keyboard: false
-            });
-
-            star.on('click', function(e) {
-                if(self.settings.deleteMode) {
-                    L.DomEvent.stop(e);
-                    self.deletePortalData(guid);
-                }
             });
 
             self.starLayerGroup.addLayer(star);
@@ -532,10 +527,30 @@ function wrapper(plugin_info) {
 
     self.processPortal = function(guid) {
         if (!guid) return;
+
+        // --- Operation Mode Gate ---
+        // 動作無し: do nothing at all.
+        var mode = self.settings.operationMode || 'add';
+        if (mode === 'none') return;
+
+        // 削除モード: tapping a starred portal removes it; never adds. No need for
+        // portal detail data, so this is checked before the detail-readiness gate.
+        if (mode === 'delete') {
+            if (self.data[guid]) self.deletePortalData(guid);
+            return;
+        }
+
         var p = window.portals[guid];
         var d = window.portalDetail.get(guid) || (p && p.options.data);
 
         if (!d || !self.isDetailsReady(d)) return;
+
+        // トグルモード: tapping an already-starred portal removes it. Tapping an
+        // unstarred portal falls through to the add logic below.
+        if (mode === 'toggle' && self.data[guid]) {
+            self.deletePortalData(guid);
+            return;
+        }
 
         // Scrape Owners
         var userSet = new Set();
@@ -567,9 +582,9 @@ function wrapper(plugin_info) {
         }
 
         if(!watchedFound) {
+            // 追加モード: auto-remove a stale mark once the watched user is no longer found.
+            // (トグルモード never reaches here with existing data - handled above.)
             if(self.data[guid]) {
-                delete self.data[guid];
-                self.saveData();
                 self.deletePortalData(guid);
             }
             return;
@@ -837,7 +852,6 @@ function wrapper(plugin_info) {
                     map.addLayer(self.ringLayerGroup);
                 }
 
-                self.setDeleteMode(self.settings.deleteMode); // Set initial pointer-events state
                 self.addMapControlButton();
                 self.redrawAllMarkers();
             } else if (tries >= 20) {
