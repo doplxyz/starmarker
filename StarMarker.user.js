@@ -3,8 +3,8 @@
 // @id             iitc-plugin-star-marker
 // @name           IITC plugin: Star Marker
 // @category       d.org.addon
-// @version        1.1.6
-// @description    [1.1.6] 監視ユーザ検知・履歴保存プラグイン
+// @version        1.1.7
+// @description    [1.1.7] 監視ユーザ検知・履歴保存プラグイン
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @include        https://intel.ingress.com/*
 // @include        https://intel-x.ingress.com/*
@@ -16,7 +16,7 @@ function wrapper(plugin_info) {
     if(typeof window.plugin !== 'function') window.plugin = function() {};
 
     plugin_info.buildName = 'release';
-    plugin_info.dateTimeVersion = '2025-02-25-130000'; // Updated date
+    plugin_info.dateTimeVersion = '2026-07-26-000000'; // Updated date
     plugin_info.pluginId = 'iitc-plugin-star-marker';
 
     // -----------------------------------------------------------------------
@@ -128,7 +128,6 @@ function wrapper(plugin_info) {
         } catch(e) {
             console.error('StarMarker: Error saving data', e);
         }
-        self.updateCount();
     };
 
     // --- Function 00045 Delayed Save
@@ -194,6 +193,10 @@ function wrapper(plugin_info) {
             .starmarker-log-table { width: 100%; border-collapse: collapse; font-size: 11px; }
             .starmarker-log-table th, .starmarker-log-table td { border: 1px solid #444; padding: 4px; text-align: left; vertical-align: top; }
             .starmarker-log-table th { background: #222; color: #fff; }
+
+            /* Map Corner Button: Clear Stars In View */
+            .starmarker-clear-control a { font-size: 18px; line-height: 26px; text-align: center; text-decoration: none; color: #ffce00; }
+            .starmarker-clear-control a:hover { color: #fff; }
         `).appendTo('head');
     };
 
@@ -202,26 +205,11 @@ function wrapper(plugin_info) {
         if($('#starmarker-toolbox-link').length === 0) {
             $('#toolbox').append('<a id="starmarker-toolbox-link" onclick="window.plugin.starMarker.openSettings();return false;">StarMarker</a>');
         }
-
-        if($('#starmarker-status').length === 0) {
-            $('#sidebar').prepend('<div id="starmarker-status" style="padding:5px; border-bottom:1px solid #444; color:#ffce00;">' +
-                'StarMarker: <span id="starmarker-count">0</span> 件 ' +
-                '<label style="margin-left:10px;"><input type="checkbox" id="starmarker-delete-mode" onchange="window.plugin.starMarker.toggleDeleteMode()"> 削除モード</label>' +
-                '</div>');
-        }
-
-        self.updateCount();
-        $('#starmarker-delete-mode').prop('checked', self.settings.deleteMode);
     };
 
-    self.updateCount = function() {
-        var count = Object.keys(self.data).length;
-        $('#starmarker-count').text(count);
-    };
-
-    // --- Function 00100 Toggle Delete Mode
-    self.toggleDeleteMode = function() {
-        self.settings.deleteMode = $('#starmarker-delete-mode').prop('checked');
+    // --- Function 00100 Set Delete Mode
+    self.setDeleteMode = function(enabled) {
+        self.settings.deleteMode = !!enabled;
         self.saveSettings();
 
         if (self.settings.deleteMode) {
@@ -247,6 +235,7 @@ function wrapper(plugin_info) {
         html += '<div id="starmarker-tab-general" class="starmarker-content active">';
         html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-clear-reload" ' + (self.settings.clearOnReload ? 'checked' : '') + '> リロードでクリア</label></div>';
         html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-deduplicate" ' + (self.settings.deduplicate ? 'checked' : '') + '> 重複データ整理 (最新のみ残す)</label></div>';
+        html += '<div class="starmarker-row"><label><input type="checkbox" id="ps-delete-mode" ' + (self.settings.deleteMode ? 'checked' : '') + '> 削除モード (★/リングをタップして削除)</label></div>';
         html += '<div class="starmarker-row"><span class="starmarker-label">保存期間(日):</span><input type="number" id="ps-auto-prune" class="starmarker-input" value="' + self.settings.autoDeleteDays + '"></div>';
 
         html += '<div class="starmarker-row"><span class="starmarker-label">スターサイズ:</span>';
@@ -267,7 +256,7 @@ function wrapper(plugin_info) {
         html += '<input type="file" id="ps-import-file" style="display:none" onchange="window.plugin.starMarker.importData(this)">';
         html += '</div>';
 
-        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.6</div>';
+        html += '<div style="margin-top:15px; font-size:0.8em; text-align:right; color:#666;">Ver 1.1.7</div>';
         html += '</div>';
 
         // User Tabs
@@ -311,6 +300,7 @@ function wrapper(plugin_info) {
     self.saveSettingsFromUI = function() {
         self.settings.clearOnReload = $('#ps-clear-reload').prop('checked');
         self.settings.deduplicate = $('#ps-deduplicate').prop('checked');
+        self.setDeleteMode($('#ps-delete-mode').prop('checked'));
         self.settings.autoDeleteDays = parseInt($('#ps-auto-prune').val()) || 0;
         self.settings.starSize = $('#ps-star-size').val();
 
@@ -357,6 +347,35 @@ function wrapper(plugin_info) {
         }
 
         return true;
+    };
+
+    // --- Function 00155 Map Control Button (Clear Stars In View)
+    self.mapClearControl = null;
+    self.addMapControlButton = function() {
+        if (!window.L || !window.map || self.mapClearControl) return;
+
+        var StarClearControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function() {
+                var div = L.DomUtil.create('div', 'leaflet-bar starmarker-clear-control');
+                var a = L.DomUtil.create('a', '', div);
+                a.href = '#';
+                a.title = '現在の視点内の★を削除';
+                a.innerHTML = '★';
+                L.DomEvent.disableClickPropagation(div);
+                L.DomEvent.on(a, 'click', L.DomEvent.stop);
+                L.DomEvent.on(a, 'click', function() {
+                    if (confirm('現在の表示範囲内のStarMarkerを削除します。よろしいですか？')) {
+                        var count = self.deleteStarsInView();
+                        if(window.chat) window.chat.addNickname('StarMarker: 視点内の★を削除しました (' + count + '件)');
+                    }
+                });
+                return div;
+            }
+        });
+
+        self.mapClearControl = new StarClearControl();
+        self.mapClearControl.addTo(window.map);
     };
 
     // --- Function 00160 Draw Marker
@@ -453,6 +472,28 @@ function wrapper(plugin_info) {
             // Feedback
             if(window.chat) window.chat.addNickname('StarMarker: 削除しました ' + guid);
         }
+    };
+
+    // --- Function 00175 Delete Stars In Current View
+    self.deleteStarsInView = function() {
+        if (!window.map) return 0;
+        var bounds = map.getBounds();
+        var count = 0;
+
+        $.each(self.data, function(guid, logs) {
+            if (!logs || logs.length === 0) return;
+            var latest = logs[logs.length - 1];
+            if (latest && bounds.contains(L.latLng(latest.lat, latest.lng))) {
+                delete self.data[guid];
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            self.saveData();
+            self.redrawAllMarkers();
+        }
+        return count;
     };
 
     // --- Function 00170 Redraw All Markers
@@ -796,7 +837,8 @@ function wrapper(plugin_info) {
                     map.addLayer(self.ringLayerGroup);
                 }
 
-                self.toggleDeleteMode(); // Set initial pointer-events state
+                self.setDeleteMode(self.settings.deleteMode); // Set initial pointer-events state
+                self.addMapControlButton();
                 self.redrawAllMarkers();
             } else if (tries >= 20) {
                 clearInterval(initTimer);
